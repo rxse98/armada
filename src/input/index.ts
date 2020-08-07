@@ -1,4 +1,5 @@
 export * from "./components/Input"
+export * from "./components/WebXR"
 
 export * from "./behaviors/DesktopInputBehaviors"
 export * from "./behaviors/GamepadInputBehaviors"

@@ -13,22 +13,25 @@
       import WebXRPolyfill from './js/third-party/webxr-polyfill/build/webxr-polyfill.module.js'
       if (QueryArgs.getBool('usePolyfill', true)) new WebXRPolyfill()
 
-      import { World, System } from "//ecsy.io/build/ecsy.module.js"
-      import WebXRSystem from "../../src/input/systems/WebXRInputSystem"
+      import { World, System } from "ecsy"
+      //import WebXRSystem from "../../src/input/systems/WebXRInputSystem"
+      import WebXRSystem from "../../dist/armada.js"
       import {
         WebXRRenderer,
+        WebXRSession,
         WebXRSpace,
         WebXRViewPoint,
         WebXRPointer,
         WebXRMainController,
         WebXRSecondController,
-      } from "../../src/input/components/WebXR"
+      } from "../../dist/armada.js"
+      //} from "../../src/input/components/WebXR"
 
       // XR globals.
       const world = new World()
       //let system = null
       let entity = null
-      let session = null
+      //let session = null
       let xrButton = null
       let isImmersive = false
       let xrImmersiveRefSpace = null
@@ -55,29 +58,33 @@
       class WebGLRenderingSystem extends System {
         
         static queries = {
-            rendering: {components: [
+            controls: {components: [
                 WebXRRenderer,
-                WebXRViewPoint, 
                 WebXRPointer, 
                 WebXRMainController, 
                 WebXRSecondController
-            ]}
+            ]},
+            view: {components: [WebXRSession, WebXRViewPoint]}
         }
 
         execute(){
           scene.startFrame()
-          //renderer.requestAnimationFrame(drawFrame)
+
+          const {view} = this.queries
+          if(view && view.results) for(entity of view.results) {
+            const session = entity.getComponent(WebXRViewPoint)
+            const viewPoint = entity.getComponent(WebXRViewPoint)
+            if( viewPoint ) scene.drawXRFrame({session}, viewPoint.pose)
+          }
+
           this.renderControls()
 
-          session = entity.getComponent(WebXRViewPoint)
-          const viewer = entity.getComponent(WebXRViewPoint)
-          viewer && scene.drawXRFrame({session}, viewer.pose)
           scene.endFrame()
         }
 
         renderControls(){
-            const {rendering} = this.queries
-            if(rendering && rendering.results) for(const entity of rendering.results) {
+            const {controls} = this.queries
+            if(controls && controls.results) for(const entity of controls.results) {
 
               const { pose, pointerMode } = entity.getComponent(WebXRPointer)
               if (pointerMode == 'tracked-pointer') {
@@ -89,7 +96,7 @@
               }
       
               //entity.getComponent(WebXRSpace)
-              const gripSpace, gripPose
+              let gripSpace, gripPose
               
               const controllers = [ 
                 entity.getComponent(WebXRMainController),

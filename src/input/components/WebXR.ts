@@ -5,7 +5,7 @@ const { Ref } = t
 export class WebXRRenderer extends Component<any> {
   static schema = {
     context: { type: Ref },
-    requestAnimationFrame: { type: Ref, default: window.requestAnimationFrame }
+    requestAnimationFrame: { type: Ref, default: window.requestAnimationFrame.bind(window) }
   }
 }
 

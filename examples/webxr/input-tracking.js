@@ -24,7 +24,6 @@
         WebXRMainController,
         WebXRSecondController,
       } from "../../dist/armada.js"
-      //} from "../../src/input/components/WebXR"
 
       // XR globals.
       const world = new World()
@@ -41,16 +40,15 @@
       let renderer = null
       let scene = null
 
-      start()
-
       function start(){
         initGL()
         createScene()
         initDOM()
         initXR_UI()
-        initSystem()
-        initEntity()
 
+        initEntity()
+        initSystem()
+        
         main()
       }
 
@@ -136,7 +134,7 @@
             WebXRSecondController
         ]},
         view: {components: [WebXRSession, WebXRViewPoint]}
-    }
+      }
 
       function main(){
         let lastTime = performance.now()
@@ -162,19 +160,19 @@
         document.querySelector('header').appendChild(xrButton.domElement)
       }
 
-      function initSystem(){
-        world.registerSystem(WebXRInputSystem, {
-          onVRSupportRequested: isSupported => 
-            isImmersive = xrButton.enabled = isSupported,
-        })
-        world.registerSystem(WebGLRenderingSystem)
-        //system = world.getSystem(WebXRSystem)
-      }
-
       function initEntity(){
         entity = world.createEntity()
         world.registerComponent(WebXRRenderer)
         entity.addComponent(WebXRRenderer, {context: gl})
+      }
+
+      function initSystem(){
+        world.registerSystem(WebGLRenderingSystem)
+        world.registerSystem(WebXRInputSystem, {
+          onVRSupportRequested: isSupported => 
+            isImmersive = xrButton.enabled = isSupported,
+        })
+        //system = world.getSystem(WebXRSystem)
       }
 
       function startXR(){}
@@ -216,4 +214,6 @@
           xrButton.setSession(null)
         }
       }
+
+      start()
 

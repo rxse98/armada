@@ -13,7 +13,7 @@
       import WebXRPolyfill from './js/third-party/webxr-polyfill/build/webxr-polyfill.module.js'
       if (QueryArgs.getBool('usePolyfill', true)) new WebXRPolyfill()
 
-      import { World } from "//ecsy.io/build/ecsy.module.js"
+      import { World, System } from "//ecsy.io/build/ecsy.module.js"
       import WebXRSystem from "../../src/input/systems/WebXRInputSystem"
       import {
         WebXRRenderer,
@@ -26,7 +26,7 @@
 
       // XR globals.
       const world = new World()
-      let system = null
+      //let system = null
       let entity = null
       let session = null
       let xrButton = null
@@ -48,8 +48,89 @@
         initXR_UI()
         initSystem()
         initEntity()
-        
+
         main()
+      }
+
+      class WebGLRenderingSystem extends System {
+        
+        static queries = {
+            rendering: {components: [
+                WebXRRenderer,
+                WebXRViewPoint, 
+                WebXRPointer, 
+                WebXRMainController, 
+                WebXRSecondController
+            ]}
+        }
+
+        execute(){
+          scene.startFrame()
+          //renderer.requestAnimationFrame(drawFrame)
+          this.renderControls()
+
+          session = entity.getComponent(WebXRViewPoint)
+          const viewer = entity.getComponent(WebXRViewPoint)
+          viewer && scene.drawXRFrame({session}, viewer.pose)
+          scene.endFrame()
+        }
+
+        renderControls(){
+            const {rendering} = this.queries
+            if(rendering && rendering.results) for(const entity of rendering.results) {
+
+              const { pose, pointerMode } = entity.getComponent(WebXRPointer)
+              if (pointerMode == 'tracked-pointer') {
+                // If we have a pointer matrix and the pointer origin is the users
+                // hand (as opposed to their head or the screen) use it to render
+                // a ray coming out of the input device to indicate the pointer
+                // direction.
+                scene.inputRenderer.addLaserPointer(pose.transform)
+              }
+      
+              //entity.getComponent(WebXRSpace)
+              const gripSpace, gripPose
+              
+              const controllers = [ 
+                entity.getComponent(WebXRMainController),
+                entity.getComponent(WebXRSecondController)
+              ]
+      
+              for (const { pose, gripSpace, handId } of controllers) {
+      
+                if (!pose) continue
+      
+                // If we have a pointer matrix we can also use it to render a cursor
+                // for both handheld and gaze-based input sources.
+      
+                // Statically render the cursor 2 meters down the ray since we're
+                // not calculating any intersections in this sample.
+                let targetRay = new Ray(pose.transform)
+                let cursorDistance = 2.0
+                let cursorPos = vec3.fromValues(
+                    targetRay.origin.x,
+                    targetRay.origin.y,
+                    targetRay.origin.z
+                    )
+                vec3.add(cursorPos, cursorPos, [
+                    targetRay.direction.x * cursorDistance,
+                    targetRay.direction.y * cursorDistance,
+                    targetRay.direction.z * cursorDistance,
+                    ])
+                // vec3.transformMat4(cursorPos, cursorPos, inputPose.targetRay.transformMatrix);
+      
+                scene.inputRenderer.addCursor(cursorPos)
+                
+                if (gripSpace && gripPose) {
+                    // If we have a grip pose use it to render a mesh showing the
+                    // position of the controller.
+                    scene.inputRenderer.addController(gripPose.transform.matrix, handId)
+                }
+              }
+      
+            }
+        }
+
       }
 
       function main(){
@@ -81,7 +162,8 @@
           onVRSupportRequested: isSupported => 
             isImmersive = xrButton.enabled = isSupported,
         })
-        system = world.getSystem(WebXRSystem)
+        world.registerSystem(WebGLRenderingSystem)
+        //system = world.getSystem(WebXRSystem)
       }
 
       function initEntity(){
@@ -125,71 +207,9 @@
         scene.inputRenderer.setControllerMesh(new Gltf2Node({url: 'media/gltf/controller/controller-left.gltf'}), 'left');
       }
 
-      function drawFrame() {
-        scene.startFrame()
-        renderer.requestAnimationFrame(drawFrame)
-        renderMain()
-        session = entity.getComponent(WebXRViewPoint)
-        const viewer = entity.getComponent(WebXRViewPoint)
-        viewer && scene.drawXRFrame({session}, viewer.pose)
-        scene.endFrame()
-      }
-
-      function renderMain() {
-
-        const { pose, pointerMode } = entity.getComponent(WebXRPointer)
-        if (pointerMode == 'tracked-pointer') {
-          // If we have a pointer matrix and the pointer origin is the users
-          // hand (as opposed to their head or the screen) use it to render
-          // a ray coming out of the input device to indicate the pointer
-          // direction.
-          scene.inputRenderer.addLaserPointer(pose.transform)
-        }
-
-        //entity.getComponent(WebXRSpace)
-        const gripSpace, gripPose
-        
-        const controllers = [ 
-          entity.getComponent(WebXRMainController),
-          entity.getComponent(WebXRSecondController)
-        ]
-
-        for (let { pose, gripSpace, handId } of controllers) {
-
-          if (!pose) continue
-
-          // If we have a pointer matrix we can also use it to render a cursor
-          // for both handheld and gaze-based input sources.
-
-          // Statically render the cursor 2 meters down the ray since we're
-          // not calculating any intersections in this sample.
-          let targetRay = new Ray(pose.transform)
-          let cursorDistance = 2.0
-          let cursorPos = vec3.fromValues(
-              targetRay.origin.x,
-              targetRay.origin.y,
-              targetRay.origin.z
-              )
-          vec3.add(cursorPos, cursorPos, [
-              targetRay.direction.x * cursorDistance,
-              targetRay.direction.y * cursorDistance,
-              targetRay.direction.z * cursorDistance,
-              ])
-          // vec3.transformMat4(cursorPos, cursorPos, inputPose.targetRay.transformMatrix);
-
-          scene.inputRenderer.addCursor(cursorPos)
-          
-          if (gripSpace && gripPose) {
-              // If we have a grip pose use it to render a mesh showing the
-              // position of the controller.
-              scene.inputRenderer.addController(gripPose.transform.matrix, handId)
-          }
-        }
-
-      }
-
       function onSessionEnded() {
         if (isImmersive) {
           xrButton.setSession(null)
         }
       }
+

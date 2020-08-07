@@ -6,6 +6,7 @@ import typescript from "rollup-plugin-typescript2"
 import commonjs from "@rollup/plugin-commonjs"
 import nodePolyfills from "rollup-plugin-node-polyfills"
 import nodeGlobals from "rollup-plugin-node-globals"
+import copy from 'rollup-plugin-copy'
 
 export default [
   {
@@ -73,6 +74,13 @@ export default [
   {
     input: "examples/webxr/index.html",
     output: { dir: "dist/examples/webxr" },
-    plugins: [html(), resolve(), commonjs(), typescript(), json(), babel({ babelHelpers: "bundled" })]
+    plugins: [html(), resolve(), commonjs(), typescript(), json(), babel({ babelHelpers: "bundled" }),
+      copy({
+        targets: [
+          { src: 'examples/webxr/css/**/*', dest: 'dist/examples/webxr/css' },
+          { src: 'examples/webxr/media/**/*', dest: 'dist/examples/webxr/media' },
+        ]
+      })
+    ]
   }
 ]

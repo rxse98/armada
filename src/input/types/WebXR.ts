@@ -1,18 +1,18 @@
-type XRSessionMode = "inline" | "immersive-vr" | "immersive-ar"
+export type XRSessionMode = "inline" | "immersive-vr" | "immersive-ar"
 
-type XRReferenceSpaceType = "viewer" | "local" | "local-floor" | "bounded-floor" | "unbounded"
+export type XRReferenceSpaceType = "viewer" | "local" | "local-floor" | "bounded-floor" | "unbounded"
 
-type XREnvironmentBlendMode = "opaque" | "additive" | "alpha-blend"
+export type XREnvironmentBlendMode = "opaque" | "additive" | "alpha-blend"
 
-type XRVisibilityState = "visible" | "visible-blurred" | "hidden"
+export type XRVisibilityState = "visible" | "visible-blurred" | "hidden"
 
-type XRHandedness = "none" | "left" | "right"
+export type XRHandedness = "none" | "left" | "right"
 
-type XRTargetRayMode = "gaze" | "tracked-pointer" | "screen"
+export type XRTargetRayMode = "gaze" | "tracked-pointer" | "screen"
 
-type XREye = "none" | "left" | "right"
+export type XREye = "none" | "left" | "right"
 
-type XREventType =
+export type XREventType =
   | "devicechange"
   | "visibilitychange"
   | "end"
@@ -25,16 +25,16 @@ type XREventType =
   | "squeezeend"
   | "reset"
 
-type XRSpace = EventTarget
+export type XRSpace = EventTarget
 
-interface XRRenderState {
+export interface XRRenderState {
   depthNear?: number
   depthFar?: number
   inlineVerticalFieldOfView?: number
   baseLayer?: XRWebGLLayer
 }
 
-interface XRInputSource {
+export interface XRInputSource {
   handedness: XRHandedness
   targetRayMode: XRTargetRayMode
   targetRaySpace: XRSpace
@@ -43,17 +43,17 @@ interface XRInputSource {
   profiles: Array<string>
 }
 
-interface XRSessionInit {
+export interface XRSessionInit {
   optionalFeatures?: string[]
   requiredFeatures?: string[]
 }
 
-interface XRSession {
-  addEventListener: Function
-  removeEventListener: Function
+export interface XRSession {
+  addEventListener: any
+  removeEventListener: any
   requestReferenceSpace(type: XRReferenceSpaceType): Promise<XRReferenceSpace>
   updateRenderState(XRRenderStateInit: XRRenderState): Promise<void>
-  requestAnimationFrame: Function
+  requestAnimationFrame: any
   end(): Promise<void>
   renderState: XRRenderState
   inputSources: Array<XRInputSource>
@@ -69,15 +69,15 @@ interface XRSession {
   updateWorldTrackingState(options: { planeDetectionState?: { enabled: boolean } }): void
 }
 
-interface XRReferenceSpace extends XRSpace {
+export interface XRReferenceSpace extends XRSpace {
   getOffsetReferenceSpace(originOffset: XRRigidTransform): XRReferenceSpace
   onreset: any
 }
 
-type XRPlaneSet = Set<XRPlane>
-type XRAnchorSet = Set<XRAnchor>
+export type XRPlaneSet = Set<XRPlane>
+export type XRAnchorSet = Set<XRAnchor>
 
-interface XRFrame {
+export interface XRFrame {
   session: XRSession
   getViewerPose(referenceSpace: XRReferenceSpace): XRViewerPose | undefined
   getPose(space: XRSpace, baseSpace: XRSpace): XRPose | undefined
@@ -94,16 +94,16 @@ interface XRFrame {
   }
 }
 
-interface XRViewerPose extends XRPose {
+export interface XRViewerPose extends XRPose {
   views: Array<XRView>
 }
 
-interface XRPose {
+export interface XRPose {
   transform: XRRigidTransform
   emulatedPosition: boolean
 }
 
-interface XRWebGLLayerOptions {
+export interface XRWebGLLayerOptions {
   antialias?: boolean
   depth?: boolean
   stencil?: boolean
@@ -112,18 +112,19 @@ interface XRWebGLLayerOptions {
   framebufferScaleFactor?: number
 }
 
-declare let XRWebGLLayer: {
+export let XRWebGLLayerObject: {
   prototype: XRWebGLLayer
   new (session: XRSession, context: WebGLRenderingContext | undefined, options?: XRWebGLLayerOptions): XRWebGLLayer
 }
-interface XRWebGLLayer {
+
+export interface XRWebGLLayer {
   framebuffer: WebGLFramebuffer
   framebufferWidth: number
   framebufferHeight: number
-  getViewport: Function
+  getViewport: any
 }
 
-declare class XRRigidTransform {
+export declare class XRRigidTransform {
   constructor(matrix: Float32Array | DOMPointInit, direction?: DOMPointInit)
   position: DOMPointReadOnly
   orientation: DOMPointReadOnly
@@ -131,77 +132,77 @@ declare class XRRigidTransform {
   inverse: XRRigidTransform
 }
 
-interface XRView {
+export interface XRView {
   eye: XREye
   projectionMatrix: Float32Array
   transform: XRRigidTransform
 }
 
-interface XRInputSourceChangeEvent {
+export interface XRInputSourceChangeEvent {
   session: XRSession
   removed: Array<XRInputSource>
   added: Array<XRInputSource>
 }
 
-interface XRInputSourceEvent extends Event {
+export interface XRInputSourceEvent extends Event {
   readonly frame: XRFrame
   readonly inputSource: XRInputSource
 }
 
 // Experimental(er) features
-declare class XRRay {
+export declare class XRRay {
   constructor(transformOrOrigin: XRRigidTransform | DOMPointInit, direction?: DOMPointInit)
   origin: DOMPointReadOnly
   direction: DOMPointReadOnly
   matrix: Float32Array
 }
 
-declare enum XRHitTestTrackableType {
+export declare enum XRHitTestTrackableType {
   "point",
   "plane"
 }
 
-interface XRHitResult {
+export interface XRHitResult {
   hitMatrix: Float32Array
 }
 
-interface XRTransientInputHitTestResult {
+export interface XRTransientInputHitTestResult {
   readonly inputSource: XRInputSource
   readonly results: Array<XRHitTestResult>
 }
 
-interface XRHitTestResult {
+export interface XRHitTestResult {
   getPose(baseSpace: XRSpace): XRPose | undefined
   // When anchor system is enabled
   createAnchor?(pose: XRRigidTransform): Promise<XRAnchor>
 }
 
-interface XRHitTestSource {
+export interface XRHitTestSource {
   cancel(): void
 }
 
-interface XRTransientInputHitTestSource {
+export interface XRTransientInputHitTestSource {
   cancel(): void
 }
 
-interface XRHitTestOptionsInit {
+export interface XRHitTestOptionsInit {
   space: XRSpace
   entityTypes?: Array<XRHitTestTrackableType>
   offsetRay?: XRRay
 }
 
-interface XRTransientInputHitTestOptionsInit {
+export interface XRTransientInputHitTestOptionsInit {
   profile: string
   entityTypes?: Array<XRHitTestTrackableType>
   offsetRay?: XRRay
 }
 
-interface XRAnchor {
+export interface XRAnchor {
   anchorSpace: XRSpace
   delete(): void
 }
 
-interface XRPlane {
+export interface XRPlane {
   orientation: "Horizontal" | "Vertical"
   planeSpace: XRSpace
   polygon: Array<DOMPointReadOnly>

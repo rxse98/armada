@@ -29,7 +29,7 @@ import NetworkTransport from "./networking/interfaces/NetworkTransport"
 import { MediaStreamControlSystem } from "./networking/systems/MediaStreamSystem"
 
 import { Transform } from "ecsy-three/src/extras/components"
-import WebXRInputSystem from "./input/systems/WebxrInputSystem"
+import { WebXRInputSystem } from "./input/systems/WebXRInputSystem"
 
 const DEFAULT_OPTIONS = {
   debug: false,
@@ -63,14 +63,14 @@ export function initializeInputSystems(world: World, options = DEFAULT_OPTIONS):
     .registerComponent(TransformComponent)
   if (options.withTransform) world.registerComponent(Transform)
   if (options.withWebXRInput) {
-    world.registerSystem(WebXRInputSystem, 
-      {onVRSupportRequested( vrSupported ){
-        if( vrSupported ){
-          const webxr:any = world.getSystem(WebXRInputSystem)
+    world.registerSystem(WebXRInputSystem, {
+      onVRSupportRequested(vrSupported) {
+        if (vrSupported) {
+          const webxr: any = world.getSystem(WebXRInputSystem)
           webxr.startVR()
         }
-      }}
-    )
+      }
+    })
   }
   return world
 }

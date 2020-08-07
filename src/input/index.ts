@@ -15,5 +15,8 @@ export * from "./interfaces/InputRelationship"
 export * from "./interfaces/InputValue"
 
 export * from "./systems/InputSystem"
+export * from "./systems/WebXRInputSystem"
 
 export * from "./types/InputAlias"
+export * from "./types/WebXR"
+export * from "./components/WebXR"

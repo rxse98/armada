@@ -10,13 +10,12 @@
 
       // If requested, use the polyfill to provide support for mobile devices
       // and devices which only support WebVR.
-      import WebXRPolyfill from './js/third-party/webxr-polyfill/build/webxr-polyfill.module.js'
+      import WebXRPolyfill from 'webxr-polyfill'
       if (QueryArgs.getBool('usePolyfill', true)) new WebXRPolyfill()
 
       import { World, System } from "ecsy"
-      //import WebXRSystem from "../../src/input/systems/WebXRInputSystem"
-      import WebXRSystem from "../../dist/armada.js"
       import {
+        WebXRInputSystem,
         WebXRRenderer,
         WebXRSession,
         WebXRSpace,
@@ -56,17 +55,6 @@
       }
 
       class WebGLRenderingSystem extends System {
-        
-        static queries = {
-            controls: {components: [
-                WebXRRenderer,
-                WebXRPointer, 
-                WebXRMainController, 
-                WebXRSecondController
-            ]},
-            view: {components: [WebXRSession, WebXRViewPoint]}
-        }
-
         execute(){
           scene.startFrame()
 
@@ -137,8 +125,18 @@
       
             }
         }
-
       }
+
+              
+      WebGLRenderingSystem.queries = {
+        controls: {components: [
+            WebXRRenderer,
+            WebXRPointer, 
+            WebXRMainController, 
+            WebXRSecondController
+        ]},
+        view: {components: [WebXRSession, WebXRViewPoint]}
+    }
 
       function main(){
         let lastTime = performance.now()
@@ -165,7 +163,7 @@
       }
 
       function initSystem(){
-        world.registerSystem(WebXRSystem, {
+        world.registerSystem(WebXRInputSystem, {
           onVRSupportRequested: isSupported => 
             isImmersive = xrButton.enabled = isSupported,
         })
@@ -184,7 +182,6 @@
       function initGL() {
         if (gl) return
         gl = createWebGLContext({xrCompatible: true})
-        initXRRenderer()
         renderer = new Renderer(gl)
       }
 

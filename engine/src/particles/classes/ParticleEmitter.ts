@@ -21,10 +21,14 @@ import {
   setWorldAccelerationAt
 } from "./ParticleMesh"
 import { ParticleEmitterInterface, ParticleEmitter } from "../interfaces"
+import { Mesh } from "three"
 
 const error = console.error
 const FRAME_STYLES = ["sequence", "randomsequence", "random"]
 const DEG2RAD = THREE.MathUtils.DEG2RAD
+
+let emitterRegistry = new Set()
+// let emitterRegistry = []
 
 export function createParticleEmitter(
   options: ParticleEmitterInterface,
@@ -71,6 +75,7 @@ export function createParticleEmitter(
 
   const mesh = config.particleMesh
   const geometry = mesh.geometry
+  const id = (emitterRegistry.size == 0) ? 0 : Array.from(emitterRegistry)[emitterRegistry.size - 1]["id"] + 1
   const startTime = time
   const startIndex = mesh.userData.nextIndex
   const meshParticleCount = mesh.userData.meshConfig.particleCount
@@ -88,7 +93,10 @@ export function createParticleEmitter(
   if (config.count > 0 && startIndex + config.count > meshParticleCount) {
     error(`run out of particles, increase the particleCount for this ThreeParticleMesh`)
   }
-
+  // clear previous Set()
+  if(mesh.userData.nextIndex == 0){
+    emitterRegistry.clear()
+  }
   const numParticles = count >= 0 ? count : meshParticleCount - mesh.userData.nextIndex
   mesh.userData.nextIndex += numParticles
 
@@ -107,17 +115,45 @@ export function createParticleEmitter(
     loadTexturePackerJSON(mesh, config, startIndex, endIndex)
   }
 
-  return { startTime, startIndex, endIndex, mesh }
+  let emitter = {
+    startTime, 
+    startIndex, 
+    endIndex,
+    mesh
+  }
+  
+  emitterRegistry.add(emitter)
+  return emitter
+  
 }
 
 export function deleteParticleEmitter(emitter: ParticleEmitter): void {
   //emitter.mesh.userData.nextIndex = emitter.startIndex;
+  let shiftAmount = emitter.endIndex - emitter.startIndex
+
+  emitterRegistry.delete(emitter)
+  
+  let arrayEmitter = Array.from(emitterRegistry)
+  let arrayVelocity = arrayEmitter[0]["mesh"].geometry.getAttribute("velocity")["array"]
+
+  for(let i = emitter.startIndex * 4; i < arrayVelocity.length; i++) {
+    arrayVelocity[i] = arrayVelocity[i + shiftAmount * 4]
+  }
+
+  arrayEmitter[0]["mesh"].userData["nextIndex"] -= shiftAmount
+
+  for(let i = 0; i < emitterRegistry.size; i++) {
+    if(i == 0 ? arrayEmitter[i]["startIndex"] != 0 : arrayEmitter[i - 1]["endIndex"] != arrayEmitter[i]["startIndex"]){
+      arrayEmitter[i]["startIndex"] -= shiftAmount
+      arrayEmitter[i]["endIndex"] -= shiftAmount
+    }  
+  }
   for (let i = emitter.startIndex; i < emitter.endIndex; i++) {
     despawn(emitter.mesh.geometry, i)
   }
-
   needsUpdate(emitter.mesh.geometry)
 }
+
 
 function despawn(geometry, index) {
   // TODO: cleanup mesh!
@@ -128,12 +164,7 @@ export function setEmitterTime(emitter: ParticleEmitter, time: number): void {
   setMaterialTime(emitter.mesh.material, time)
 }
 
-export function setEmitterMatrixWorld(
-  emitter: ParticleEmitter,
-  matrixWorld: THREE.Matrix4,
-  time: number,
-  deltaTime: number
-): void {
+export function setEmitterMatrixWorld(emitter: ParticleEmitter, matrixWorld: THREE.Matrix4, time: number, deltaTime: number): void {
   const geometry = emitter.mesh.geometry
   const endIndex = emitter.endIndex
   const startIndex = emitter.startIndex

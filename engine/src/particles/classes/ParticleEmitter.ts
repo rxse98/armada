@@ -21,7 +21,7 @@ import {
   setWorldAccelerationAt
 } from "./ParticleMesh"
 import { ParticleEmitterInterface, ParticleEmitter } from "../interfaces"
-import { Mesh } from "three"
+import { Mesh, Geometry } from "three"
 
 const error = console.error
 const FRAME_STYLES = ["sequence", "randomsequence", "random"]
@@ -127,37 +127,196 @@ export function createParticleEmitter(
   
 }
 
+//needsUpdate
+
 export function deleteParticleEmitter(emitter: ParticleEmitter): void {
-  //emitter.mesh.userData.nextIndex = emitter.startIndex;
   let shiftAmount = emitter.endIndex - emitter.startIndex
-
   emitterRegistry.delete(emitter)
-  
-  let arrayEmitter = Array.from(emitterRegistry)
-  let arrayVelocity = arrayEmitter[0]["mesh"].geometry.getAttribute("velocity")["array"]
 
-  for(let i = emitter.startIndex * 4; i < arrayVelocity.length; i++) {
-    arrayVelocity[i] = arrayVelocity[i + shiftAmount * 4]
+
+  for (let i = emitter.startIndex; i < emitter.endIndex; i++) {
+    despawn(emitter.mesh.geometry, i)
+  }
+  needsUpdate(emitter.mesh.geometry)
+  
+  
+  let geometry = emitter.mesh.geometry
+
+  for(let i = emitter.startIndex; i <= emitter.mesh.userData.nextIndex; i++){
+    copyEmitterAttrs(geometry.getAttribute("velocity"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("row1"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("row2"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("row3"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("offset"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("scales"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("orientations"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("colors"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("opacities"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("timings"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("acceleration"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("angularvelocity"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("angularacceleration"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("worldacceleration"), i, shiftAmount)
+    copyEmitterAttrs(geometry.getAttribute("velocityscale"), i, shiftAmount)  
   }
 
-  arrayEmitter[0]["mesh"].userData["nextIndex"] -= shiftAmount
-
+  emitter.mesh.userData.nextIndex -= shiftAmount
+  let arrayEmitter = Array.from(emitterRegistry)
   for(let i = 0; i < emitterRegistry.size; i++) {
     if(i == 0 ? arrayEmitter[i]["startIndex"] != 0 : arrayEmitter[i - 1]["endIndex"] != arrayEmitter[i]["startIndex"]){
       arrayEmitter[i]["startIndex"] -= shiftAmount
       arrayEmitter[i]["endIndex"] -= shiftAmount
     }  
   }
-  for (let i = emitter.startIndex; i < emitter.endIndex; i++) {
-    despawn(emitter.mesh.geometry, i)
-  }
-  needsUpdate(emitter.mesh.geometry)
+
 }
 
+function copyEmitterAttrs(attributes, index, shiftAmount){
+  if(attributes.array.length == 400){
+    attributes.setXYZW(index,
+      attributes.getX(index + shiftAmount), 
+      attributes.getY(index + shiftAmount), 
+      attributes.getZ(index + shiftAmount), 
+      attributes.getW(index + shiftAmount))
+  }
+  else if (attributes.array.length == 300){
+    attributes.setXYZ(index,
+      attributes.getX(index + shiftAmount),
+      attributes.getY(index + shiftAmount),
+      attributes.getZ(index + shiftAmount))
+  } 
+}
+
+// function copyEmitterAttrsV2(geometry, index, shiftAmount){
+//   let velocity = geometry.getAttribute("velocity")
+//   let row1 = geometry.getAttribute("row1")
+//   let row2 = geometry.getAttribute("row2")
+//   let row3 = geometry.getAttribute("row3")
+//   let offset = geometry.getAttribute("offset")
+//   let scales = geometry.getAttribute("scales")
+//   let orientations = geometry.getAttribute("orientations")
+//   let colors = geometry.getAttribute("colors")
+//   let opacities = geometry.getAttribute("opacities")
+//   let timings = geometry.getAttribute("timings")
+//   let acceleration = geometry.getAttribute("acceleration")
+//   let angularvelocity = geometry.getAttribute("angularvelocity")
+//   let angularacceleration = geometry.getAttribute("angularacceleration")
+//   let worldacceleration = geometry.getAttribute("worldacceleration")
+//   let velocityscale = geometry.getAttribute("velocityscale")
+  
+//   velocity.setXYZW(index,
+//     velocity.getX(index + shiftAmount), 
+//     velocity.getY(index + shiftAmount), 
+//     velocity.getZ(index + shiftAmount), 
+//     velocity.getW(index + shiftAmount))
+
+//   row1.setXYZW(index, 
+//     row1.getX(index + shiftAmount), 
+//     row1.getY(index + shiftAmount), 
+//     row1.getZ(index + shiftAmount), 
+//     row1.getW(index + shiftAmount))
+
+//   row2.setXYZW(index, 
+//     row2.getX(index + shiftAmount), 
+//     row2.getY(index + shiftAmount), 
+//     row2.getZ(index + shiftAmount), 
+//     row2.getW(index + shiftAmount))
+
+//   row3.setXYZW(index, 
+//     row3.getX(index + shiftAmount), 
+//     row3.getY(index + shiftAmount), 
+//     row3.getZ(index + shiftAmount), 
+//     row3.getW(index + shiftAmount))
+
+//   offset.setXYZ(index,
+//     offset.getX(index + shiftAmount),
+//     offset.getY(index + shiftAmount),
+//     offset.getZ(index + shiftAmount))
+
+//   // scales.setW(index - 1, scales.getW(index + shiftAmount))
+//   scales.setXYZ(index,
+//     scales.getX(index + shiftAmount),
+//     scales.getY(index + shiftAmount),
+//     scales.getZ(index + shiftAmount))
+
+//   // orientations.setX(index, orientations.getX(index + shiftAmount))
+//   orientations.setXYZW(index, 
+//     orientations.getX(index + shiftAmount),
+//     orientations.getY(index + shiftAmount),
+//     orientations.getZ(index + shiftAmount),
+//     orientations.getW(index + shiftAmount))
+
+//   colors.setXYZW(index, 
+//     colors.getX(index + shiftAmount),
+//     colors.getY(index + shiftAmount),
+//     colors.getZ(index + shiftAmount),
+//     colors.getW(index + shiftAmount))
+
+//   opacities.setXYZW(index, 
+//     opacities.getX(index + shiftAmount),
+//     opacities.getY(index + shiftAmount),
+//     opacities.getZ(index + shiftAmount),
+//     opacities.getW(index + shiftAmount))
+
+//   timings.setXYZW(index, 
+//     timings.getX(index + shiftAmount),
+//     timings.getY(index + shiftAmount),
+//     timings.getZ(index + shiftAmount),
+//     timings.getW(index + shiftAmount))
+
+//   acceleration.setXYZW(index, 
+//     acceleration.getX(index + shiftAmount),
+//     acceleration.getY(index + shiftAmount),
+//     acceleration.getZ(index + shiftAmount),
+//     acceleration.getW(index + shiftAmount))
+
+//   angularvelocity.setXYZW(index, 
+//     angularvelocity.getX(index + shiftAmount),
+//     angularvelocity.getY(index + shiftAmount),
+//     angularvelocity.getZ(index + shiftAmount),
+//     angularvelocity.getW(index + shiftAmount))
+
+//   angularacceleration.setXYZW(index, 
+//     angularacceleration.getX(index + shiftAmount),
+//     angularacceleration.getY(index + shiftAmount),
+//     angularacceleration.getZ(index + shiftAmount),
+//     angularacceleration.getW(index + shiftAmount))
+
+//   worldacceleration.setXYZ(index,
+//     worldacceleration.getX(index + shiftAmount),
+//     worldacceleration.getY(index + shiftAmount),
+//     worldacceleration.getZ(index + shiftAmount))
+
+//   velocityscale.setXYZ(index,
+//     velocityscale.getX(index + shiftAmount),
+//     velocityscale.getY(index + shiftAmount),
+//     velocityscale.getZ(index + shiftAmount))
+// }
 
 function despawn(geometry, index) {
   // TODO: cleanup mesh!
+
+  // matrixWorld = null
+  let matrixWorld = {
+    elements: []
+  }
+
+  setMatrixAt(geometry, index, matrixWorld)
+  setOffsetAt(geometry, index, 0)
+  setScalesAt(geometry, index, 0)
+  setColorsAt(geometry, index, [{}])
+  setOrientationsAt(geometry, index, 0, 0)
+  setOpacitiesAt(geometry, index, 0)
+  setFrameAt(geometry, index, 0, 0, 0, 0, 0, 0)
+
   setTimingsAt(geometry, index, 0, 0, 0, 0)
+  setVelocityAt(geometry, index, 0, 0, 0, 0)
+  setAccelerationAt(geometry, index, 0, 0, 0, 0)
+  setAngularVelocityAt(geometry, index, 0, 0, 0, 0)
+  setAngularAccelerationAt(geometry, index, 0, 0, 0, 0)
+  setWorldAccelerationAt(geometry, index, 0, 0, 0)
+  setBrownianAt(geometry, index, 0, 0)
+  setVelocityScaleAt(geometry, index, 0, 0, 0)
 }
 
 export function setEmitterTime(emitter: ParticleEmitter, time: number): void {
@@ -235,6 +394,7 @@ function spawn(geometry, matrixWorld, config, index, spawnTime, lifeTime, repeat
   setWorldAccelerationAt(geometry, index, worldAcceleration.x, worldAcceleration.y, worldAcceleration.z)
   setBrownianAt(geometry, index, config.brownianSpeed, config.brownianScale)
   setVelocityScaleAt(geometry, index, config.velocityScale, config.velocityScaleMin, config.velocityScaleMax)
+
 }
 
 // function calcSpawnOffsetsFromGeometry(geometry): any {
